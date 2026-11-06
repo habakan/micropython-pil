@@ -1,11 +1,12 @@
 # micropython-pil
 
-The part of Pillow's drawing API that a screen UI uses (`Image`, `ImageDraw`, `ImageFont`), for MicroPython
-on microcontrollers with a few hundred KB of RAM. Code written for Pillow on CPython runs with `from PIL import
-...` unchanged, as long as it stays inside what is listed below.
+A subset of Pillow's drawing API (`Image`, `ImageDraw`, `ImageFont`) for MicroPython on microcontrollers
+with a few hundred KB of RAM, made to run [SeedSigner](https://github.com/SeedSigner/seedsigner)'s screens on
+a Raspberry Pi Pico 2 (RP2350, 520 KB of RAM, no PSRAM). It is not a SeedSigner project.
 
-It was written to run [SeedSigner](https://github.com/SeedSigner/seedsigner)'s screens on a Raspberry Pi
-Pico 2 (RP2350, 520 KB of RAM, no PSRAM), and is extracted from that port.
+**The subset is what SeedSigner's screens use**, no more. Code written for Pillow on CPython runs with
+`from PIL import ...` unchanged as long as it stays inside the list below. Anything that needs pixels is out
+of scope by design (see "What does not, and why"); please don't expect it to grow towards full Pillow.
 
 ## How it fits in a small RAM
 
