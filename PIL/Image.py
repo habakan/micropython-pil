@@ -72,25 +72,30 @@ class Image:
     def height(self):
         return self.size[1]
 
-    def add(self, op):
+    def add(self, op, b=None):
         # What an opaque op hides needn't be kept: the canvas is drawn over for every screen, and parts of
         # it (a keyboard's keys) for every button press, which would otherwise pile up until the heap ran out
         whole = (0, 0, self.size[0] - 1, self.size[1] - 1)
         if covers(op, self.size[0], self.size[1]):
             self.ops, self.boxes, self.dirty = [op], [box(op)], whole
             return
-        b = box(op) or whole
+        kept = b if b is not None else box(op)  # b: op's box, worked out once by a caller drawing it again
+        b = kept or whole
         d = self.dirty
         self.dirty = b if d is None else (min(d[0], b[0]), min(d[1], b[1]), max(d[2], b[2]), max(d[3], b[3]))
         if len(self.boxes) != len(self.ops):
             self.boxes = [box(o) for o in self.ops]
         cover = opaque(op)
         if cover or op[0] == "rect" and op[6] is not None or op[0] in ("line", "arc"):
-            keep = [i for i, (o, b) in enumerate(zip(self.ops, self.boxes)) if not hidden(o, b, op, cover)]
-            if len(keep) < len(self.ops):
-                self.ops, self.boxes = [self.ops[i] for i in keep], [self.boxes[i] for i in keep]
+            # In place: an animated chart's pulses come here for each segment, and new lists of all the ops
+            # would not find room in a fragmented heap
+            i = len(self.ops)
+            while i:
+                i -= 1
+                if hidden(self.ops[i], self.boxes[i], op, cover):
+                    del self.ops[i], self.boxes[i]
         self.ops.append(op)
-        self.boxes.append(box(op))
+        self.boxes.append(kept)
 
     def paste(self, im, box=None, mask=None):
         if not isinstance(im, Image):  # a colour fills the box
