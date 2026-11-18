@@ -44,7 +44,8 @@ def main():
         path = next((p for p in paths if p.stem == name), None)
         if path is None:
             sys.exit("no font file for %s in %s" % (name, " ".join(sys.argv[3:])))
-        font = ImageFont.truetype(str(path), int(size))
+        # BASIC, as the device lays text out: Pillow picks raqm when the system has it, and its advances differ
+        font = ImageFont.truetype(str(path), int(size), layout_engine=ImageFont.Layout.BASIC)
         # A newline is a glyph to PIL's single-line calls, .notdef's box and advance
         want = {c for c in chars if c >= " " or c == "\n"} | (set() if name in icons else ascii_ | {"\n"})
         chars_sorted = "".join(sorted(want))
