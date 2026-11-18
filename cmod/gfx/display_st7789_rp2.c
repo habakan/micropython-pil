@@ -1,5 +1,5 @@
 /* A 240x240 ST7789 on an RP2040/RP2350's SPI, with CS tied low (so SPI mode 3) and an IPS panel. The board's
- * board_pins.h names PIN_LCD_RES, PIN_LCD_DC, PIN_LCD_SCK, PIN_LCD_MOSI and LCD_FLIP */
+ * board_pins.h names PIN_LCD_RES, PIN_LCD_DC, PIN_LCD_SCK, PIN_LCD_MOSI and LCD_ROTATION (or LCD_FLIP) */
 #include "display.h"
 #include "board_pins.h"
 #include "hardware/gpio.h"
@@ -16,6 +16,10 @@
 #ifndef LCD_FLIP
 #define LCD_FLIP 0
 #endif
+/* Clockwise turn of the image: 0, 90 (as on Waveshare's 1.3inch LCD HAT) or 180 */
+#ifndef LCD_ROTATION
+#define LCD_ROTATION (LCD_FLIP ? 180 : 0)
+#endif
 
 static void cmd(uint8_t c, const uint8_t *data, unsigned int n) {
     gpio_put(PIN_LCD_DC, 0);
@@ -26,7 +30,8 @@ static void cmd(uint8_t c, const uint8_t *data, unsigned int n) {
 
 /* With CS low, noise on SCK while the MCU resets shifts the LCD's bit count until it is reset too, which RES does */
 void gfx_display_init(void) {
-    static const uint8_t colmod = 0x55, madctl = LCD_FLIP ? 0xd0 : 0x00; /* MY|MX, and ML so the refresh runs the way rows are written */
+    /* 180: MY|MX, and ML so the refresh runs the way rows are written; 90: MV|MX */
+    static const uint8_t colmod = 0x55, madctl = LCD_ROTATION == 180 ? 0xd0 : LCD_ROTATION == 90 ? 0x60 : 0x00;
     gpio_init(PIN_LCD_RES);
     gpio_set_dir(PIN_LCD_RES, GPIO_OUT);
     gpio_put(PIN_LCD_RES, 0);
@@ -52,7 +57,7 @@ void gfx_display_init(void) {
 
 void gfx_display_window(int x0, int y0, int x1, int y1) {
     /* flipped, the 240 visible rows are the last of the controller's 320 */
-    int r0 = y0 + (LCD_FLIP ? 80 : 0), r1 = y1 - 1 + (LCD_FLIP ? 80 : 0);
+    int off = LCD_ROTATION == 180 ? 80 : 0, r0 = y0 + off, r1 = y1 - 1 + off;
     uint8_t caset[4] = {0, (uint8_t)x0, 0, (uint8_t)(x1 - 1)};
     uint8_t raset[4] = {(uint8_t)(r0 >> 8), (uint8_t)r0, (uint8_t)(r1 >> 8), (uint8_t)r1};
     cmd(0x2a, caset, 4);

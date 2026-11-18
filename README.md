@@ -64,7 +64,8 @@ Add `cmod` to `USER_C_MODULES`. For CMake ports set `GFX_DISPLAY`:
 
 - `st7789_rp2` (the default): a 240 x 240 ST7789 on an RP2040/RP2350's SPI. Set `GFX_BOARD_DIR` to a
   directory with your `board_pins.h` (`PIN_LCD_RES`, `PIN_LCD_DC`, `PIN_LCD_SCK`, `PIN_LCD_MOSI`, and
-  `LCD_FLIP` for a panel mounted upside down).
+  `LCD_ROTATION`: 0, 90 or 180 degrees clockwise, 90 for Waveshare's 1.3inch LCD HAT held with the
+  joystick on the left; `LCD_FLIP` is the same as 180).
 - `none`: no display. Make ports (unix) use this.
 
 Another display needs a `display_<name>.c` with the three functions in `display.h`. The canvas size and band
