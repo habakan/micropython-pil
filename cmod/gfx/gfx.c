@@ -344,6 +344,11 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(gfx_save_obj, 4, 4, gfx_save);
 #define QR_LEN qrcodegen_BUFFER_LEN_FOR_VERSION(QR_VERSION_MAX)
 static uint8_t qr_temp[QR_LEN], qr_out[QR_LEN + 1];
 
+static void wipe(uint8_t *p, size_t n) {
+    volatile uint8_t *v = p;
+    while (n--) *v++ = 0;
+}
+
 /* qr_encode(data): a str (numeric, alphanumeric or byte mode, whichever fits it) or bytes as a QR code at
  * level L in the smallest version, as SeedSigner's qrcode and qrencode make it; qrcodegen's buffer, trimmed */
 static mp_obj_t gfx_qr_encode(mp_obj_t data) {
@@ -363,9 +368,12 @@ static mp_obj_t gfx_qr_encode(mp_obj_t data) {
         ok = qrcodegen_encodeBinary(qr_temp, b.len, qr_out, qrcodegen_Ecc_LOW, qrcodegen_VERSION_MIN,
                                     QR_VERSION_MAX, qrcodegen_Mask_AUTO, false);
     }
+    int n = ok ? qrcodegen_getSize(qr_out) : 0;
+    mp_obj_t code = ok ? mp_obj_new_bytes(qr_out, 1 + ((size_t)n * n + 7) / 8) : mp_const_none;
+    // A SeedQR's digits or entropy would otherwise stay here until the next code
+    wipe(qr_temp, sizeof(qr_temp)), wipe(qr_out, sizeof(qr_out));
     if (!ok) mp_raise_ValueError(MP_ERROR_TEXT("too long for a QR code"));
-    int n = qrcodegen_getSize(qr_out);
-    return mp_obj_new_bytes(qr_out, 1 + ((size_t)n * n + 7) / 8);
+    return code;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(gfx_qr_encode_obj, gfx_qr_encode);
 
